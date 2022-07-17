@@ -8,6 +8,7 @@ import Food
 import Data.Maybe
 import Util
 import Hangman
+import Menu
 
 
 snakePicture :: Picture
@@ -56,6 +57,7 @@ drawFood view food = if isJust food
 
 drawState :: State -> Picture
 drawState state
+  | menuScreen state = Pictures [drawMenu (menu state)]
   | getOver state = Pictures [background, sP, hangman, fP, drawGameOver, score]
   | getWin state = Pictures [background, sP, hangman, fP, drawGameWin, score]
   | not (control state) = Pictures [background, sP, hangman, fP, drawEnterLetter,score]

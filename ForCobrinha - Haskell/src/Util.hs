@@ -2,6 +2,7 @@ module Util where
 
 import Graphics.Gloss
 import System.Random
+import Window
 
 
 -- --------------------------------------------------- -- 
@@ -13,7 +14,7 @@ type Coordinate = (Float, Float)
 
 -- Inputs
 data Directions =  UP | DOWN | LEFT | RIGHT deriving (Eq)
-data Decisions =  ACCEPT | PAUSE | EXIT deriving (Eq)
+data Decisions = NOACCEPT| ACCEPT | PAUSE | EXIT deriving (Eq)
 nameGame = "ForCobrinha" :: String
 
 -- --------------------------------------------------- -- 
@@ -35,7 +36,7 @@ data SizePixel =
  -- Default Sizes
 
 sizeGridDefault =
-    SizeGrid {gridWidth = 720, gridHeight = 480}
+    SizeGrid {gridWidth = windowWidth defaultConfigWindow, gridHeight = windowHeight defaultConfigWindow}
 sizeGridSnake   =
     SizeGrid {gridWidth = 432, gridHeight = 288}
 sizeGridHangman =
@@ -128,7 +129,7 @@ makeNewSeed gen limit = g'
 
 -- -- Char seletion
 selectCharater :: Char -> Char
-selectCharater char 
+selectCharater char
     | char == 'i' = 'a'
     | char == 'e' = 's'
     | char == 'a' = 'd'
