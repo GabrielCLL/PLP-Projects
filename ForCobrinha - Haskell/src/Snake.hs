@@ -12,7 +12,9 @@ module Snake
        , itsNotValid
        , eating
        , growning
+       , decreasing
        , overllaping
+       , sizeBody
        ) where
 
 import Graphics.Gloss
@@ -95,12 +97,20 @@ itsNotInTheGrid view snake = sx <= 0 || sx >= (bx / px) - 1 || sy <= 0  || sy >=
 canibalism :: Snake -> Bool
 canibalism snake = snakeHeadPos snake  `elem` snakeBodyPos snake
 
+-- Bye bye little body
+itsAemptyBody :: Snake -> Bool
+itsAemptyBody snake 
+  | null (snakeBodyPos snake) = True
+  | otherwise = False
+
+
 -- It's a valid snake moviment?
 itsNotValid :: Snake ->  Bool
-itsNotValid snake = board || canibal
+itsNotValid snake = board || canibal || onlyTheSoul
   where
-    board   = itsNotInTheGrid viewSnake snake
-    canibal = canibalism snake
+    board        = itsNotInTheGrid viewSnake snake
+    canibal      = canibalism snake
+    onlyTheSoul  = itsAemptyBody snake
 
 
 -- Eating (Nhom Nhom)
@@ -109,15 +119,31 @@ eating snake food
   | snakeHeadPos snake == foodPosition food = True
   | otherwise = False
 
+-- It's getting bigger. That's what she said.
 growning :: Snake -> Food -> Snake
 growning snake food = snake {snakeHeadPos = head, snakeBodyPos = body}
   where
     head = foodPosition food
     body = snakeHeadPos snake : snakeBodyPos snake
 
+-- Oh no! it's not a food, it's me
 overllaping :: Snake -> Coordinate -> Bool
 overllaping snake coordinate
   | coordinate `elem` snakePosition = True
   | otherwise = False
   where
      snakePosition =  snakeHeadPos snake : snakeBodyPos snake
+
+-- Sh*t, getting lesser and lesser
+decreasing :: Snake -> Snake
+decreasing snake = snake  {snakeHeadPos = head, snakeBodyPos = body}
+  where
+    head = snakeHeadPos snake
+    body = movebody (snakeBodyPos snake)
+
+-- This it's my three numbers
+sizeBody :: Snake -> Int
+sizeBody snake 
+  | null (snakeBodyPos snake) || length(snakeBodyPos snake) <3  = 0
+  | otherwise = length(snakeBodyPos snake) - length(snakeBodyPos initialSnake)
+  

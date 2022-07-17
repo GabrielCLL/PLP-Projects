@@ -56,16 +56,29 @@ drawFood view food = if isJust food
 
 drawState :: State -> Picture
 drawState state
-  | getOver state = Pictures [background, sP, hangman, fP, drawGameOver]
-  | getWin state = Pictures [background, sP, hangman, fP, drawGameWin]
-  | otherwise = Pictures [background, sP, hangman, fP]
+  | getOver state = Pictures [background, sP, hangman, fP, drawGameOver, score]
+  | getWin state = Pictures [background, sP, hangman, fP, drawGameWin, score]
+  | not (control state) = Pictures [background, sP, hangman, fP, drawEnterLetter,score]
+  | otherwise = Pictures [background, sP, hangman, fP, score]
   where
       s = getSnake state
       f = getFood state
       background = drawForCobrinha
       sP = drawSnake viewSnake s
       fP = drawFood viewFood  f
+      score = drawScore state
       hangman = translate (-200) (150) $ renderHangman (getHangman state)
+
+
+drawEnterLetter :: Picture
+drawEnterLetter = pictures
+        [color black  (translate (-135) (92) (scale 0.2 0.2 (text "Please enter a letter")))]
+
+drawScore :: State -> Picture
+drawScore state = Pictures [fig1, fig2]
+  where
+    fig1 = color black  (translate (240) (180) (scale 0.2 0.2 (text "Score:")))
+    fig2 = color black  (translate (240) (140) (scale 0.2 0.2 (text (show (score state)))))
 
 -- draw the background of the game
 drawForCobrinha :: Picture

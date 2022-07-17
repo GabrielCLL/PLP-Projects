@@ -111,10 +111,10 @@ getRandomNumber gen limit = x
     where
         (x, g') = randomR (0, limit -1) gen
 
-getRandomNumber' :: StdGen -> Float -> Float
-getRandomNumber' gen limit = x
+getRandomNumber' :: StdGen -> Float -> Float -> Float
+getRandomNumber' gen limitx limity = x
     where
-        (x, g') = randomR (0, limit -1) gen
+        (x, g') = randomR (limitx, limity -1) gen
 
 -- -- -- New seed
 makeNewSeed :: StdGen -> Float -> StdGen

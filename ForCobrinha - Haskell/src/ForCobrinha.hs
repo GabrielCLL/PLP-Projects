@@ -19,24 +19,48 @@ import Food
 gameStep :: Float -> State -> State
 gameStep _ state
   | getPaused  state = state
-  | itsEatingFood (doStep state) = eatFood $ growSnake state
- -- | itsNotValid (getSnake state) = setGameOver True state
+  | itsNotValid (getSnake state) = setGameOver True state
   | checkGameWin (getHangman state) = setGameWin True state
   | otherwise = newState
   where
-      doStep =   makeFood . doMoveSnake
-      oldNumLetters = discoveredLettersLength (discoveredLetters (challenge (getHangman (doStep state))))
-      hangman = updateHangman (getHangman (doStep state))
-      newNumLetters = discoveredLettersLength (discoveredLetters (challenge hangman))
+      newState = decisionState (control state) state
 
-      guessed = guessedLetter oldNumLetters newNumLetters -- Retorna True se acertou a letra, False caso contrário
+decisionState :: Bool -> State -> State
+decisionState boolean state
+    | boolean = runSnake state
+    | otherwise = runHangman state
 
-      newState = setHangman hangman (doStep state)
+
+runSnake :: State -> State
+runSnake state
+    | itsEatingFood (doStep state) = setControl False state
+    | otherwise = doStep state
+    where
+        doStep =  makeFood . doMoveSnake . setScore (sizeBody (getSnake state)) 
+
+
+runHangman :: State -> State
+runHangman state
+    | hangmanHasInput (getHangman state) = (setHangman newHangman state) {getSnake = newSnake, getFood = Nothing, control = True}
+    | otherwise = state
+    where
+        guessed = discoveredLetter (getHangman state)
+        hangman = updateHangman (getHangman state)
+
+        newHangman = checkChangeLevel hangman
+        newSnake = getSnake (growSnake guessed state)
 
 
 -- --------------------------------------------------- -- 
 
 -- Functions:
+
+discoveredLetter :: Hangman -> Bool
+discoveredLetter hangman = discovered
+    where
+        myChallenge = challenge hangman
+        myCurrentLetter = currentLetter hangman
+        discovered = myCurrentLetter `elem` secretWord myChallenge && notElem myCurrentLetter (kickedLetters myChallenge)
 
 guessedLetter :: Int -> Int -> Bool
 guessedLetter oldNumLetters newNumLetters = newNumLetters > oldNumLetters
@@ -59,7 +83,7 @@ doMoveSnake state = setSnake newSnake state
 makeFood :: State -> State
 makeFood state = if isNothing(getFood state)
                 then if overlapping
-                     then makeFood state
+                     then makeFood $ setSeed newSeed state
                      else setFood (Just food) $ setSeed newSeed state
                 else state
     where
@@ -68,26 +92,22 @@ makeFood state = if isNothing(getFood state)
         food = moveFood (initialFood {foodPosition =  fst tuple})
         overlapping = overllaping (getSnake state) (foodPosition food)
 
-eatFood :: State -> State
-eatFood state = if isJust (getFood state) && eat
-                then setFood Nothing state
-                else state
-    where
-        food   = getFood state
-        snake  = getSnake state
-        eat    = eating snake (fromJust food)
-
 -- Getting Bigger
-growSnake :: State -> State
-growSnake state = setSnake newSnake state
+growSnake :: Bool -> State -> State
+growSnake decision state =
+    if decision
+        then setSnake newGrowSnake state
+        else setSnake newSnakeDecrease state
     where
         snake = getSnake state
         food = fromJust (getFood state)
-        newSnake = growning snake food
+        newGrowSnake = growning snake food
+        newSnakeDecrease = decreasing snake
 
 -- Eating to Grow
 itsEatingFood :: State -> Bool
 itsEatingFood state
+    | isNothing (getFood state) = False
     | eating snake food        = True
     | otherwise                = False
     where

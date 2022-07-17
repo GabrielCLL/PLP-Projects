@@ -9,6 +9,8 @@ module State
         , setGameOver
         , setGameWin
         , setSeed
+        , setControl
+        , setScore
         ) where
 
 import Snake
@@ -32,12 +34,14 @@ data State =
           , getOver      :: Bool
           , getWin       :: Bool
           , seed         :: StdGen
+          , control      :: Bool
+          , score        :: Int
           }
 
 -- Initial State of Game
 -- Snake part -- TODO Hangman part
 initialState :: StdGen -> Hangman -> State 
-initialState gen hangman = State initialSnake RIGHT hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen
+initialState gen hangman = State initialSnake RIGHT hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0
 
 {- 
 initialState :: Maybe Food -> State
@@ -67,4 +71,10 @@ setGameWin win state = state {getWin = win}
 
 setSeed :: StdGen -> State -> State
 setSeed newSeed state = state {seed = newSeed}
+
+setControl :: Bool -> State -> State
+setControl newControl state = state {control = newControl} 
+
+setScore :: Int -> State -> State
+setScore value state = state {score = value}
 

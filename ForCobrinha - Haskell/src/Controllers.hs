@@ -34,9 +34,12 @@ keyToDecision _ = Nothing
 
 -- Handle the pressing key
 handleKey :: Event -> State -> State
-handleKey (CKeyHeld k) state = verifyHangmanDecision k state 
+handleKey (CKeyHeld k) state =
+    if not (control state)
+        then verifyHangmanDecision k state
+        else state
 handleKey (KeyHeld k) state
-    -- | k == SpecialKey KeyEsc = exitSuccess
+    | not (control state) = state
     | isNothing (keyToDiretion k) =  maybe id verifyDecision (keyToDecision k) state
     | otherwise = maybe id verifyDirSnake (keyToDiretion k) state
 handleKey _ state = state
@@ -54,7 +57,7 @@ verifyDecision decision state
 
 
 verifyHangmanDecision :: Char -> State -> State
-verifyHangmanDecision letterKicked state = 
+verifyHangmanDecision letterKicked state =
     setHangman newHangman state
     where newHangman = hangmanInput letterKicked (getHangman state)
-  
+
