@@ -11,6 +11,7 @@ import Data.Maybe
 import Hangman
 import Food
 import Menu
+import System.Posix.Internals (statGetType)
 
 
 -- --------------------------------------------------- -- 
@@ -27,6 +28,11 @@ gameStep _ state
   | otherwise = newState
   where
       newState = decisionState (control state) state
+
+runMenu :: State -> State
+runMenu state 
+    | opSelectec (menu state) (getDecision state) == "jogar" = setRunMenu False state
+    | otherwise = setMenu (moveSelection (menu state) (getDirection state)) state
 
 decisionState :: Bool -> State -> State
 decisionState boolean state

@@ -20,6 +20,7 @@ module Snake
 import Graphics.Gloss
 import Util
 import Food
+import Data.Maybe
 
 -- Snake
 data Snake =
@@ -76,8 +77,10 @@ movebody :: [a] -> [a]
 movebody = reverse . tail . reverse
 
 -- Set a direction of the Head
-setDirectionHead :: Snake -> Directions -> Snake
-setDirectionHead snake diretion = snake {direction = diretion}
+setDirectionHead :: Snake -> Maybe Directions -> Snake
+setDirectionHead snake diretion 
+  | isNothing diretion = snake
+  | otherwise = snake {direction = fromJust diretion}
 
 -- It's inside the grid?
 itsNotInTheGrid :: View -> Snake -> Bool

@@ -32,13 +32,13 @@ seletionRec :: Float -> Float -> Float -> Float -> Color -> Picture
 seletionRec x y width height c = Color c $ translate x y  $ rectangleWire width height
 
 
-moveSelection :: Menu -> Directions -> Menu
+moveSelection :: Menu -> Maybe Directions -> Menu
 moveSelection menu dir = menu {selectPosition = coordinate}
     where 
         (hx, hy) = selectPosition menu
         coordinate
-            | dir == UP = (hx, limite (hy + 30))
-            | dir == DOWN = (hx, limite (hy - 30))
+            | dir == Just UP = (hx, limite (hy + 30))
+            | dir == Just DOWN = (hx, limite (hy - 30))
             | otherwise = (hx, hy)
         limite = limiteSelection 
 
@@ -49,10 +49,10 @@ limiteSelection valor
     | otherwise = valor
 
 
-opSelectec :: Menu -> String
-opSelectec menu 
-    | selectPosition menu == (0,40)  = "jogar" 
-    | selectPosition menu == (0,10)  =  "records" 
-    | selectPosition menu == (0,-20) =  "criadores" 
+opSelectec :: Menu -> Decisions -> String
+opSelectec menu decision
+    | selectPosition menu == (0,40) && decision == ACCEPT  = "jogar" 
+    | selectPosition menu == (0,10) && decision == ACCEPT  =  "records" 
+    | selectPosition menu == (0,-20) && decision == ACCEPT  =  "criadores" 
     | otherwise = ""
 
