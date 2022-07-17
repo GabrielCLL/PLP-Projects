@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Redundant bracket" #-}
 {-# HLINT ignore "Move brackets to avoid $" #-}
 module Hangman where
 
@@ -8,9 +7,9 @@ import Util
 import System.Random
 import Data.Char
 import Data.List
-import System.Exit (exitSuccess)
 import Data.Maybe (isJust, isNothing)
 import Control.Monad (forever)
+
 
 
 data Hangman = Hangman
@@ -31,20 +30,39 @@ data Challenge = Challenge
     , kickedLetters :: [Char]
     } deriving (Eq, Show)
 
-
 initialStateHangman :: StdGen -> [String] -> Hangman
-initialStateHangman gen allWords = Hangman { level = firstLevel , wordLists = wordList
+initialStateHangman gen allWords = Hangman { level = firstLevel , wordLists = wordListB
                                             , currentWordList = firstList, discoveredWords = []
                                             , challenge = newChallenge
                                             , currentLetter = '#'
                                             }
     where
         firstLevel = 0
-        wordList = processWordLists allWords ([] :: [[String]])
-        firstList = wordList !! firstLevel
+        wordListA = filterAllWords allWords
+        wordListB = processWordLists wordListA ([] :: [[String]])
+        firstList = wordListB !! firstLevel
         newChallenge = makeNewChallenge gen firstList []
 
 
+initialStateHangman' :: Hangman -> Hangman
+initialStateHangman' hangman = Hangman { level = firstLevel, wordLists = wordList
+                                            , currentWordList = firstList, discoveredWords = []
+                                            , challenge = newChallenge
+                                            , currentLetter = '#'
+                                            }
+    where
+        firstLevel = 0
+        wordList = (wordLists hangman)
+        firstList = wordList !! firstLevel
+        newChallenge = makeNewChallenge (gen (challenge hangman)) firstList []
+
+
+filterAllWords :: [String] -> [String]
+filterAllWords allWords 
+    | null allWords = []
+    | last (head allWords) `notElem` ['a'..'z'] = init (head allWords) : filterAllWords (tail allWords)
+    | otherwise = head allWords : filterAllWords (tail allWords)
+    
 
 processWordLists :: [String] -> [[String]] -> [[String]]
 processWordLists [] wordLists = wordLists
@@ -73,9 +91,9 @@ renderHangman hangman = pictures [challenge, kickedLetters, level]
 
 buildTextChallenge :: Hangman -> [String]
 buildTextChallenge (Hangman level _ _ _ challenge _) =
-    ["Challenge tip: " ++ (challengeTip challenge) ++ "  Secret Word: \n" ++
+    ["Challenge tip: " ++ challengeTip challenge ++ "  Secret Word: \n" ++
     (intersperse ' ' $ fmap renderDiscoveredLetter (discoveredLetters challenge))] ++
-    ["Kicked letters: " ++ (kickedLetters challenge)] ++ ["Level: " ++ show (level + 1)]
+    ["Kicked letters: " ++ kickedLetters challenge] ++ ["Level: " ++ show (level + 1)]
 
 
 renderDiscoveredLetter :: Maybe Char -> Char
@@ -117,25 +135,25 @@ charInWord word char = char `elem` word
 updateStateChallenge :: Hangman -> Hangman
 updateStateChallenge (Hangman level wordLists currentWordList discoveredWords challenge currentLetter) =
     case (charInWord (secretWord challenge) currentLetter, charInWord (kickedLetters challenge) currentLetter) of
-    (_ ,True) -> (Hangman level wordLists currentWordList discoveredWords challenge '#')
-    (True, _) -> (Hangman level wordLists currentWordList discoveredWords updatedChallenge '#')
-    (False, _) -> (Hangman level wordLists currentWordList discoveredWords updatedChallenge '#')
+    (_ ,True) -> Hangman level wordLists currentWordList discoveredWords challenge '#'
+    (True, _) -> Hangman level wordLists currentWordList discoveredWords updatedChallenge '#'
+    (False, _) -> Hangman level wordLists currentWordList discoveredWords updatedChallenge '#'
     where
         updatedChallenge = addCharInChallenge challenge currentLetter
 
 
 checkChangeChallenge :: Hangman -> Hangman
 checkChangeChallenge (Hangman level wordLists currentWordList discoveredWords challenge currentLetter) =
-    (Hangman level wordLists currentWordList newDiscoveredWords newChallenge currentLetter)
+    Hangman level wordLists currentWordList newDiscoveredWords newChallenge currentLetter
     where
-        newDiscoveredWords = verifyNewDiscoveredWords discoveredWords challenge
+        newDiscoveredWords = verifyNewDiscoveredWords discoveredWords currentWordList challenge
         newChallenge = verifyNewChallenge discoveredWords challenge currentWordList newDiscoveredWords
 
 
-verifyNewDiscoveredWords :: [String] -> Challenge -> [String]
-verifyNewDiscoveredWords discoveredWords challenge =
-    if discoveredTheWord (discoveredLetters challenge)
-        then (secretWord challenge) : discoveredWords
+verifyNewDiscoveredWords :: [String] -> [String] -> Challenge -> [String]
+verifyNewDiscoveredWords discoveredWords currentWordList challenge =
+    if discoveredTheWord (discoveredLetters challenge) && (length (tail currentWordList) > length discoveredWords)
+        then secretWord challenge : discoveredWords
         else discoveredWords
 
 
@@ -143,7 +161,7 @@ verifyNewChallenge :: [String] -> Challenge -> [String] -> [String] -> Challenge
 verifyNewChallenge discoveredWords challenge currentWordList newDiscoveredWords =
     if discoveredTheWord (discoveredLetters challenge)
     then
-        if(length (tail currentWordList) == length newDiscoveredWords)
+        if length (tail currentWordList) == length newDiscoveredWords
         then challenge
         else makeNewChallenge (gen challenge) currentWordList newDiscoveredWords
     else challenge
@@ -154,10 +172,15 @@ discoveredTheWord = all isJust
 
 
 makeNewChallenge :: StdGen -> [String] -> [String] -> Challenge
-makeNewChallenge gen currentWordList discoveredWords = freshChallenge gen scretWord challengeTip
+makeNewChallenge gen currentWordList discoveredWords = freshChallenge newGen scretWord challengeTip
     where
-        scretWord = getRandomWord gen ((tail currentWordList) \\ discoveredWords)
+        scretWord = getRandomWord gen (tail currentWordList \\ discoveredWords)
+        newGen = makeNewSeed gen 100.0
         challengeTip = head currentWordList
+
+
+hangmanHasInput :: Hangman -> Bool
+hangmanHasInput hangman = currentLetter hangman /= '#'
 
 
 addCharInChallenge :: Challenge -> Char -> Challenge
@@ -174,22 +197,22 @@ addCharInChallenge (Challenge gen challengeTip secretWord discoveredLetters kick
 
 addCharInkickedLetters :: Char -> String -> String
 addCharInkickedLetters char kickedLetters
-    | isAlpha char = char : kickedLetters --char `elem` ['a'..'z'] = char : kickedLetters
+    | isAlpha char = char : kickedLetters
     | otherwise = kickedLetters
 
 
 checkChangeLevel :: Hangman -> Hangman
 checkChangeLevel (Hangman level wordLists currentWordList discoveredWords challenge currentLetter)
     | (length (tail currentWordList) == length discoveredWords) && (level == length wordLists -1) =
-        (Hangman level wordLists currentWordList discoveredWords challenge currentLetter)
+        Hangman level wordLists currentWordList discoveredWords challenge currentLetter
     | (length (tail currentWordList) == length discoveredWords) && (level < length wordLists -1) =
         makeNewLevel (Hangman level wordLists currentWordList discoveredWords challenge currentLetter)
-    | otherwise = (Hangman level wordLists currentWordList discoveredWords challenge currentLetter)
+    | otherwise = Hangman level wordLists currentWordList discoveredWords challenge currentLetter
 
 
 makeNewLevel :: Hangman -> Hangman
 makeNewLevel (Hangman level wordLists currentWordList discoveredWords challenge currentLetter) =
-    (Hangman newLevel wordLists newCurrentList [] newChallenge '@')
+    Hangman newLevel wordLists newCurrentList [] newChallenge '#'
     where
         newLevel = level + 1
         newCurrentList = wordLists !! newLevel
@@ -198,24 +221,23 @@ makeNewLevel (Hangman level wordLists currentWordList discoveredWords challenge 
 
 checkGameWin :: Hangman -> Bool
 checkGameWin (Hangman level wordLists currentWordList discoveredWords challenge currentLetter) =
-    (level == length wordLists -1 && (length currentWordList - 1) == (length discoveredWords))
+    level == length wordLists -1 && (length currentWordList - 1) == length discoveredWords
 
 
 discoveredLettersLength :: [Maybe Char] -> Int
 discoveredLettersLength [] = 0
-discoveredLettersLength (x:xs) = if (isJust x)
+discoveredLettersLength (x:xs) = if isJust x
                                  then 1 + discoveredLettersLength xs
                                  else 0 + discoveredLettersLength xs
 
 
 hangmanInput :: Char -> Hangman -> Hangman
 hangmanInput letterKicked (Hangman level wordLists currentWordList discoveredWords challenge currentLetter) =
-    (Hangman level wordLists currentWordList discoveredWords challenge (letterKicked))
+    Hangman level wordLists currentWordList discoveredWords challenge letterKicked
 
 
 updateHangman :: Hangman -> Hangman
 updateHangman hangman = do
     if discoveredTheWord (discoveredLetters (challenge hangman)) && not (checkGameWin hangman)
     then checkChangeLevel $ checkChangeChallenge hangman
-    else updateStateChallenge hangman
-
+    else checkChangeChallenge $ updateStateChallenge hangman

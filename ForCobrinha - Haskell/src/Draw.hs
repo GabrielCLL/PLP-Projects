@@ -8,6 +8,7 @@ import Food
 import Data.Maybe
 import Util
 import Hangman
+import Menu
 
 
 snakePicture :: Picture
@@ -56,30 +57,80 @@ drawFood view food = if isJust food
 
 drawState :: State -> Picture
 drawState state
-  | getOver state = Pictures [background, sP, hangman, fP, drawGameOver]
-  | getWin state = Pictures [background, sP, hangman, fP, drawGameWin]
-  | otherwise = Pictures [background, sP, hangman, fP]
+  | menuScreen state = Pictures [drawMenu (menu state)]
+  | getPaused state = Pictures [background, sP, hangman, fP, drawPause, score]
+  | getOver state = Pictures [background, grid, sP, hangman, fP, drawGameOver, score]
+  | getWin state = Pictures [background, grid, sP, hangman, fP, drawGameWin, score]
+  | not (control state) = Pictures [background, grid, sP, hangman, fP, drawEnterLetter,score]
+  | otherwise = Pictures [background, grid, sP, hangman, fP, score]
   where
       s = getSnake state
       f = getFood state
       background = drawForCobrinha
       sP = drawSnake viewSnake s
       fP = drawFood viewFood  f
+      score = drawScore state
+      grid = translate (-207) (78) $ drawGridSnake (getHangman state)
       hangman = translate (-200) (150) $ renderHangman (getHangman state)
+
+
+drawEnterLetter :: Picture
+drawEnterLetter = pictures
+        [color black  (translate (-135) (92) (scale 0.2 0.2 (text "Please enter a letter")))]
+
+drawScore :: State -> Picture
+drawScore state = Pictures [fig1, fig2]
+  where
+    fig1 = color black  (translate (240) (180) (scale 0.2 0.2 (text "Score:")))
+    fig2 = color black  (translate (240) (140) (scale 0.2 0.2 (text (show (score state)))))
 
 -- draw the background of the game
 drawForCobrinha :: Picture
 drawForCobrinha = pictures [sBoardBack gameBoardBackground, hBoardBack gameBoardBackground]
 
--- Draw the Win e Lose 
+-- Draw the Win, Lose and Pause
 
 -- Game Over
 drawGameOver :: Picture
 drawGameOver = pictures
-        [color red  (translate (-110) (-0)(scale 0.3 0.3 (text "Game Over")))]
+        [rect, color red  (translate (-110) (-0)(scale 0.3 0.3 (text "Game Over")))]
+        where rect = color (dark white) $ translate (0) (11) $ rectangleSolid 250 60
 
 -- Game Win
 drawGameWin :: Picture
 drawGameWin = pictures
-        [color black  (translate (-110) (-0)(scale 0.3 0.3 (text "Game Win")))]
-        
+        [rect, color black  (translate (-100) (0)(scale 0.3 0.3 (text "Game Win")))]
+        where rect = color (dark white) $ translate (0) (11) $ rectangleSolid 250 60
+
+-- Game Pause
+drawPause :: Picture
+drawPause = pictures [ rect, paused, pressKeySpace, pressKeyBack]
+  where
+    paused   = color red  (translate (-130) (-0)(scale 0.3 0.3 (text "Game Paused")))
+    pressKeySpace = color black (translate (-100) (-30) (scale 0.1 0.1 (text "Press SpaceBar to back to play")))
+    pressKeyBack  = color black (translate (-130) (-60) (scale 0.1 0.1 (text "Press char 'q' to go back to Menu")))
+    rect = color (dark white) $ translate (5) (-20) $ rectangleSolid 290 200
+
+-- Snake Grid
+drawGridSnake :: Hangman -> Picture
+drawGridSnake hangman = pictures [node x y | x <- [0,pWidth..(gWidth - pWidth)], y <- [0,pHeight..(gHeight - pHeight)]]
+  where
+    pixel = pixelSnake
+    pWidth = floor $ pixelWidth pixel
+    pHeight = floor $ pixelHeight pixel
+
+    grid = sizeGridSnake
+    gWidth = floor $ gridWidth grid
+    gHeight = floor $ gridHeight grid
+
+    node x y = Color (if even ((x `div` pWidth) + (y `div` pHeight))
+      then dark $ dark $ selectColor hangman
+      else dark $ selectColor hangman) $
+      translate (fromIntegral x) (-fromIntegral y) $ rectangleSolid 18 12
+
+
+selectColor :: Hangman -> Color
+selectColor hangman =
+  if even (level hangman)
+    then green
+    else yellow

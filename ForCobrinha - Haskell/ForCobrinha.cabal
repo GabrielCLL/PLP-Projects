@@ -31,6 +31,7 @@ library
       Food
       ForCobrinha
       Hangman
+      Menu
       Snake
       State
       Util
