@@ -10,33 +10,49 @@ import System.Random
 import Data.Maybe
 import Hangman
 import Food
+import Menu
+import Util
 
 
+-- --------------------------------------------------- -- 
 
 -- Game Step and Functions
 
 -- Game Step
 gameStep :: Float -> State -> State
 gameStep _ state
-  | getPaused  state = state
+  | getPaused  state = goBackToMenu state
+  | (screenDecision state) == RECORD || (screenDecision state) == CREATORS = goBackToMenu state
+  | menuScreen state = runMenu state
   | itsNotValid (getSnake state) = setGameOver True state
   | checkGameWin (getHangman state) = setGameWin True state
   | otherwise = newState
   where
       newState = decisionState (control state) state
 
+goBackToMenu :: State -> State
+goBackToMenu state
+    | getPaused state && (getDecision state == BACK) = runMenu $ setRunMenu True state
+    | (getDecision state) == BACKMENU = resetState state
+    | otherwise = state
+
+runMenu :: State -> State
+runMenu state
+    | opSelectec (menu state) (getDecision state) == "jogar" = setRunMenu False state
+    | opSelectec (menu state) (getDecision state) == "records" = state {screenDecision = RECORD}
+    | opSelectec (menu state) (getDecision state) == "criadores" = state {screenDecision = CREATORS}
+    | otherwise = setMenu (moveSelection (menu state) (getDirection state)) state
+
 decisionState :: Bool -> State -> State
-decisionState boolean state
-    | boolean = runSnake state
-    | otherwise = runHangman state
+decisionState boolean state = if boolean
+                                then runSnake state
+                                else runHangman state
 
-
-runSnake :: State -> State
 runSnake state
     | itsEatingFood (doStep state) = setControl False state
     | otherwise = doStep state
     where
-        doStep =  makeFood . doMoveSnake . setScore (sizeBody (getSnake state)) 
+        doStep =  makeFood . doMoveSnake . setScore (sizeBody (getSnake state))
 
 
 runHangman :: State -> State

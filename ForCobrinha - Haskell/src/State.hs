@@ -11,6 +11,10 @@ module State
         , setSeed
         , setControl
         , setScore
+        , setRunMenu
+        , setMenu
+        , setDecision
+        , resetState
         ) where
 
 import Snake
@@ -21,12 +25,13 @@ import Util
 import Boards
 import Food
 import Data.Maybe
+import Menu
 import System.Random (StdGen)
 
 
 data State =
      State{ getSnake     :: Snake
-          , getDirection :: Directions  
+          , getDirection :: Maybe Directions  
           , getHangman   :: Hangman
           , getFood      :: Maybe Food
           , getPaused    :: Bool
@@ -36,12 +41,14 @@ data State =
           , seed         :: StdGen
           , control      :: Bool
           , score        :: Int
+          , menuScreen   :: Bool
+          , menu         :: Menu
+          , getDecision  :: Decisions
+          , screenDecision :: Decisions
           }
 
--- Initial State of Game
--- Snake part -- TODO Hangman part
 initialState :: StdGen -> Hangman -> State 
-initialState gen hangman = State initialSnake RIGHT hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0
+initialState gen hangman = State initialSnake (Just RIGHT) hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0 True initalMenu DEFAULT MENU
 
 {- 
 initialState :: Maybe Food -> State
@@ -57,11 +64,14 @@ setHangman hangman state = state {getHangman = hangman}
 setFood :: Maybe Food -> State -> State
 setFood food state = state {getFood = food}
 
-setDirection :: Directions -> State -> State
+setDirection :: Maybe Directions -> State -> State
 setDirection dir state = state {getDirection = dir}
 
 setPaused :: Bool -> State -> State
 setPaused paused state = state {getPaused = paused}
+
+setDecision :: Decisions -> State -> State
+setDecision decision state = state {getDecision = decision}
 
 setGameOver :: Bool -> State -> State
 setGameOver over state = state {getOver = over}
@@ -77,4 +87,17 @@ setControl newControl state = state {control = newControl}
 
 setScore :: Int -> State -> State
 setScore value state = state {score = value}
+
+setRunMenu :: Bool -> State -> State
+setRunMenu decision state = state {menuScreen = decision}
+
+setMenu :: Menu -> State -> State
+setMenu newMenu state = state {menu = newMenu}
+
+resetState :: State -> State
+resetState state = newState
+        where 
+                newHangman = initialStateHangman' (getHangman state)
+                newState = initialState (seed state) newHangman
+
 

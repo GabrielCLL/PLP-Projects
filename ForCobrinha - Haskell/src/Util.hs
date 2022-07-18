@@ -2,6 +2,7 @@ module Util where
 
 import Graphics.Gloss
 import System.Random
+import Window
 
 
 -- --------------------------------------------------- -- 
@@ -13,7 +14,7 @@ type Coordinate = (Float, Float)
 
 -- Inputs
 data Directions =  UP | DOWN | LEFT | RIGHT deriving (Eq)
-data Decisions =  ACCEPT | PAUSE | EXIT deriving (Eq)
+data Decisions = DEFAULT | ACCEPT | MENU | START | CREATORS | RECORD | PAUSE | EXIT | BACK | BACKMENU deriving (Eq)
 nameGame = "ForCobrinha" :: String
 
 -- --------------------------------------------------- -- 
@@ -35,7 +36,7 @@ data SizePixel =
  -- Default Sizes
 
 sizeGridDefault =
-    SizeGrid {gridWidth = 720, gridHeight = 480}
+    SizeGrid {gridWidth = windowWidth defaultConfigWindow, gridHeight = windowHeight defaultConfigWindow}
 sizeGridSnake   =
     SizeGrid {gridWidth = 432, gridHeight = 288}
 sizeGridHangman =
@@ -123,38 +124,3 @@ makeNewSeed gen limit = g'
         (x, g') = randomR (0, limit -1) gen
 
 -- --------------------------------------------------- -- 
-
--- Mapping Char
-
--- -- Char seletion
-selectCharater :: Char -> Char
-selectCharater char 
-    | char == 'i' = 'a'
-    | char == 'e' = 's'
-    | char == 'a' = 'd'
-    | char == 'o' = 'f'
-    | char == 'u' = 'g'
-    | char == 'm' = 'h'
-    | char == 'd' = 'j'
-    | char == 's' = 'k'
-    | char == 'r' = 'l'
-    | char == 'y' = 'z'
-    | char == 'j' = 'c'
-    | char == 'b' = 'v'
-    | char == 'k' = 'b'
-    | char == 'q' = 'n'
-    | char == 'v' = 'm'
-    | char == '/' = 'q'
-    | char == ',' = 'w'
-    | char == '.' = 'e'
-    | char == 'h' = 'r'
-    | char == 'x' = 't'
-    | char == 'w' = 'y'
-    | char == 'l' = 'u'
-    | char == 't' = 'i'
-    | char == 'c' = 'o'
-    | char == 'p' = 'p'
-    | otherwise = '#'
-
--- --------------------------------------------------- -- 
-
