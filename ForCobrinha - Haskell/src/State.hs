@@ -99,3 +99,5 @@ resetState state = newState
         where 
                 newHangman = initialStateHangman' (getHangman state)
                 newState = initialState (seed state) newHangman
+
+
