@@ -46,6 +46,7 @@ keyToDecision _ = Nothing
 
 -- Menu handle
 handleMenuKey :: Event -> State -> State
+handleMenuKey (CKeyHeld 'q') state = setDecision BACKMENU state
 handleMenuKey (SKeyHeld KeyEnter) state = setDecision ACCEPT state
 handleMenuKey (SKeyHeldUp KeyEnter) state = setDecision DEFAULT state
 handleMenuKey (KeyHeld k) state =  verifyDirMenu (keyToDiretion k) state
@@ -59,7 +60,7 @@ verifyDirMenu diretions state = if getDirection  state == diretions
 
 -- Snake handle
 handleSnakeKey :: Event -> State -> State
-handleSnakeKey (CKeyHeld 'q') state = setDecision BACKMENU state
+handleSnakeKey (CKeyHeld 'q') state = if getPaused state then setDecision BACKMENU state else state
 handleSnakeKey (SKeyHeld KeySpace) state = setPaused (not $ getPaused state) state
 handleSnakeKey (SKeyHeldUp KeyBackspace) state = setDecision DEFAULT state
 handleSnakeKey (KeyHeld k) state = verifyDirSnake (keyToDiretion k) state

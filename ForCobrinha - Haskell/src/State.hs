@@ -44,10 +44,11 @@ data State =
           , menuScreen   :: Bool
           , menu         :: Menu
           , getDecision  :: Decisions
+          , screenDecision :: Decisions
           }
 
 initialState :: StdGen -> Hangman -> State 
-initialState gen hangman = State initialSnake (Just RIGHT) hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0 True initalMenu DEFAULT
+initialState gen hangman = State initialSnake (Just RIGHT) hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0 True initalMenu DEFAULT MENU
 
 {- 
 initialState :: Maybe Food -> State

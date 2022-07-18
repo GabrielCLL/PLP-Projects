@@ -22,6 +22,7 @@ import Util
 gameStep :: Float -> State -> State
 gameStep _ state
   | getPaused  state = goBackToMenu state
+  | (screenDecision state) == RECORD || (screenDecision state) == CREATORS = goBackToMenu state
   | menuScreen state = runMenu state
   | itsNotValid (getSnake state) = setGameOver True state
   | checkGameWin (getHangman state) = setGameWin True state
@@ -31,13 +32,15 @@ gameStep _ state
 
 goBackToMenu :: State -> State
 goBackToMenu state
-    | (getDecision state) == BACKMENU = resetState state
     | getPaused state && (getDecision state == BACK) = runMenu $ setRunMenu True state
+    | (getDecision state) == BACKMENU = resetState state
     | otherwise = state
 
 runMenu :: State -> State
 runMenu state
     | opSelectec (menu state) (getDecision state) == "jogar" = setRunMenu False state
+    | opSelectec (menu state) (getDecision state) == "records" = state {screenDecision = RECORD}
+    | opSelectec (menu state) (getDecision state) == "criadores" = state {screenDecision = CREATORS}
     | otherwise = setMenu (moveSelection (menu state) (getDirection state)) state
 
 decisionState :: Bool -> State -> State

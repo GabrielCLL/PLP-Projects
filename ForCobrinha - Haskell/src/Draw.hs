@@ -57,10 +57,12 @@ drawFood view food = if isJust food
 
 drawState :: State -> Picture
 drawState state
-  | menuScreen state = Pictures [drawMenu (menu state)]
-  | getPaused state = Pictures [background, sP, hangman, fP, drawPause, score]
+  | (screenDecision state) == RECORD = Pictures [drawMaximumScore]
+  | (screenDecision state) == CREATORS = Pictures [drawCreators]
+  | menuScreen state && (screenDecision state) == MENU = Pictures [drawMenu (menu state)]
   | getOver state = Pictures [background, grid, sP, hangman, fP, drawGameOver, score]
   | getWin state = Pictures [background, grid, sP, hangman, fP, drawGameWin, score]
+  | getPaused state = Pictures [background, sP, hangman, fP, drawPause, score]
   | not (control state) = Pictures [background, grid, sP, hangman, fP, drawEnterLetter,score]
   | otherwise = Pictures [background, grid, sP, hangman, fP, score]
   where
@@ -101,6 +103,18 @@ drawGameWin :: Picture
 drawGameWin = pictures
         [rect, color black  (translate (-100) (0)(scale 0.3 0.3 (text "Game Win")))]
         where rect = color (dark white) $ translate (0) (11) $ rectangleSolid 250 60
+
+
+drawCreators :: Picture
+drawCreators = pictures
+        [color black  (translate (-300) (0)(scale 0.2 0.2 (text "Gabriel Cavalcanti Leandro de Lima"))),
+        color black  (translate (-300) (-50)(scale 0.2 0.2 (text "Renaldo Silva Santino"))),
+        color black  (translate (-300) (-100)(scale 0.1 0.1 (text "Press char 'q' to go back to Menu")))]
+
+drawMaximumScore :: Picture
+drawMaximumScore = pictures
+        [color black  (translate (-200) (0)(scale 0.3 0.3 (text "Maximum Score: 6"))),
+         color black  (translate (-300) (-100)(scale 0.1 0.1 (text "Press char 'q' to go back to Menu")))]
 
 -- Game Pause
 drawPause :: Picture
