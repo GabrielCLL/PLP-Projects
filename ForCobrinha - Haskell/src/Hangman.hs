@@ -30,19 +30,39 @@ data Challenge = Challenge
     , kickedLetters :: [Char]
     } deriving (Eq, Show)
 
-
 initialStateHangman :: StdGen -> [String] -> Hangman
-initialStateHangman gen allWords = Hangman { level = firstLevel , wordLists = wordList
+initialStateHangman gen allWords = Hangman { level = firstLevel , wordLists = wordListB
                                             , currentWordList = firstList, discoveredWords = []
                                             , challenge = newChallenge
                                             , currentLetter = '#'
                                             }
     where
         firstLevel = 0
-        wordList = processWordLists allWords ([] :: [[String]])
-        firstList = wordList !! firstLevel
+        wordListA = filterAllWords allWords
+        wordListB = processWordLists wordListA ([] :: [[String]])
+        firstList = wordListB !! firstLevel
         newChallenge = makeNewChallenge gen firstList []
 
+
+initialStateHangman' :: Hangman -> Hangman
+initialStateHangman' hangman = Hangman { level = firstLevel, wordLists = wordList
+                                            , currentWordList = firstList, discoveredWords = []
+                                            , challenge = newChallenge
+                                            , currentLetter = '#'
+                                            }
+    where
+        firstLevel = 0
+        wordList = wordLists hangman
+        firstList = wordList !! firstLevel
+        newChallenge = makeNewChallenge (gen (challenge hangman)) firstList []
+
+
+filterAllWords :: [String] -> [String]
+filterAllWords allWords 
+    | null allWords = []
+    | last (head allWords) `notElem` ['a'..'z'] = init (head allWords) : filterAllWords (tail allWords)
+    | otherwise = head allWords : filterAllWords (tail allWords)
+    
 
 processWordLists :: [String] -> [[String]] -> [[String]]
 processWordLists [] wordLists = wordLists

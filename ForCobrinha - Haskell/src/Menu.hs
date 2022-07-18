@@ -18,13 +18,13 @@ menuBoard =
           }
 
 drawMenu :: Menu ->Picture
-drawMenu menu = pictures [jogo, jogar, records, criadores, selecao]
+drawMenu menu = pictures [jogo, jogar, records, criadores, quit, selecao]
     where 
         jogo      = color black (translate (-75) (165) (scale 0.2 0.2 (text "ForCobrinha")))  
         jogar     = color black (translate (-40) (30) (scale 0.2 0.2 (text "JOGAR")))
         records   = color black (translate (-55) (0) (scale 0.2 0.2 (text "RECORDS")))
         criadores = color red (translate (-65) (-30) (scale 0.2 0.2 (text "CRIADORES")))
-
+        quit      = color red (translate (-121) (-90) (scale 0.1 0.1 (text "Press Enter to select or ESC to quit")))
         selecao   = seletionRec x y 200 30 blue
         (x,y)     = selectPosition menu 
 

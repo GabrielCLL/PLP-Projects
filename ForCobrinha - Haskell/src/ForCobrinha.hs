@@ -11,7 +11,7 @@ import Data.Maybe
 import Hangman
 import Food
 import Menu
-import System.Posix.Internals (statGetType)
+import Util
 
 
 -- --------------------------------------------------- -- 
@@ -21,23 +21,48 @@ import System.Posix.Internals (statGetType)
 -- Game Step
 gameStep :: Float -> State -> State
 gameStep _ state
-  | getPaused  state = state
-  | menuScreen state = runMenu state
-  | itsNotValid (getSnake state) = setGameOver True state
-  | checkGameWin (getHangman state) = setGameWin True state
-  | otherwise = newState
-  where
-      newState = decisionState (control state) state
+  | screen state == MENU      = runMenu state
+  | screen state == RECORD    = tela state
+  | screen state == CRIADORES = tela state
+  | screen state == GAMEOVER  = tela state
+  | screen state == GAMEWIN   = tela state
+  | screen state == PAUSED    = telaJogo state
+  | itsNotValid (getSnake state) = setGameOver True $ setScreenStatus GAMEOVER state
+  | checkGameWin (getHangman state) = setGameWin True $ setScreenStatus GAMEWIN state
+  | otherwise = runJogo state
+
+goBackToMenu :: State -> State
+goBackToMenu state
+    | getPaused state && (getDecision state == BACKMENU) = runMenu $ setScreenStatus MENU $ resetState state 
+    | otherwise = state
+
+tela :: State -> State
+tela state
+    | getDecision state == BACKMENU = runMenu $ setScreenStatus MENU $ resetState state 
+    | otherwise = state
+
+telaJogo :: State -> State
+telaJogo state
+    | getPaused  state = goBackToMenu state
+    | otherwise = setScreenStatus JOGO state
+
+runJogo :: State -> State
+runJogo state
+    | getPaused state = setScreenStatus PAUSED state
+    | control state   = runSnake  state
+    | otherwise       = runHangman state
 
 runMenu :: State -> State
-runMenu state 
-    | opSelectec (menu state) (getDecision state) == "jogar" = setRunMenu False state
+runMenu state
+    | opSelectec (menu state) (getDecision state) == "jogar"     = setScreenStatus JOGO state
+    | opSelectec (menu state) (getDecision state) == "records"   = setScreenStatus RECORD state
+    | opSelectec (menu state) (getDecision state) == "criadores" = setScreenStatus CRIADORES state
     | otherwise = setMenu (moveSelection (menu state) (getDirection state)) state
 
 decisionState :: Bool -> State -> State
-decisionState boolean state
-    | True = runSnake state
-    | otherwise = runHangman state
+decisionState boolean state = if boolean
+                                then runSnake $ setScreenStatus JOGO state
+                                else runHangman $ setScreenStatus JOGO state
 
 runSnake state
     | itsEatingFood (doStep state) = setControl False state

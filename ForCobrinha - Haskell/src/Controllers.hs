@@ -38,6 +38,7 @@ keyToDiretionMenu _ = Nothing
 keyToDecision :: Key -> Maybe Decisions
 keyToDecision (SpecialKey KeyEsc) = Just EXIT
 keyToDecision (SpecialKey KeySpace) = Just PAUSE
+keyToDecision (SpecialKey KeyBackspace) = Just BACK
 keyToDecision (SpecialKey KeyEnter) = Just ACCEPT
 keyToDecision _ = Nothing
 
@@ -45,8 +46,9 @@ keyToDecision _ = Nothing
 
 -- Menu handle
 handleMenuKey :: Event -> State -> State
+handleMenuKey (CKeyHeld 'q') state = setDecision BACKMENU state
 handleMenuKey (SKeyHeld KeyEnter) state = setDecision ACCEPT state
-handleMenuKey (SKeyHeldUp KeyEnter) state = setDecision NOACCEPT state
+handleMenuKey (SKeyHeldUp KeyEnter) state = setDecision DEFAULT state
 handleMenuKey (KeyHeld k) state =  verifyDirMenu (keyToDiretion k) state
 handleMenuKey (KeyHeldUp k) state =  setDirection Nothing state
 handleMenuKey _ state = state
@@ -56,12 +58,12 @@ verifyDirMenu diretions state = if getDirection  state == diretions
                                 then state
                                 else setDirection diretions state
 
-
 -- Snake handle
 handleSnakeKey :: Event -> State -> State
-handleSnakeKey (KeyHeld k) state
-    | isNothing (keyToDiretion k) =  maybe id verifyDecision (keyToDecision k) state
-    | otherwise = verifyDirSnake (keyToDiretion k) state
+handleSnakeKey (CKeyHeld 'q') state = if getPaused state then setDecision BACKMENU state else state
+handleSnakeKey (SKeyHeld KeySpace) state = setPaused (not $ getPaused state) state
+handleSnakeKey (SKeyHeldUp KeyBackspace) state = setDecision DEFAULT state
+handleSnakeKey (KeyHeld k) state = verifyDirSnake (keyToDiretion k) state
 handleSnakeKey _ state = state
 
 -- Hangman handle
@@ -72,23 +74,25 @@ handleHangmanKey _ state = state
 -- Handler Manager
 handleKey :: Event -> State -> State
 handleKey event state
-    | menuScreen state = handleMenuKey event state
-    | not (control state) && not (menuScreen state)  = handleHangmanKey event state
-    | control state && not (menuScreen state) = handleSnakeKey event state
-    | otherwise = state
+    | screen state == MENU      = handleMenuKey event state
+    | screen state == RECORD    = handleMenuKey event state
+    | screen state == CRIADORES = handleMenuKey event state
+    | screen state == GAMEOVER  = handleMenuKey event state
+    | screen state == GAMEWIN   = handleMenuKey event state
+    | otherwise                 = handleJogo event state
 
+handleJogo :: Event -> State -> State
+handleJogo event state 
+    | screen state == PAUSED                       = handleSnakeKey event state
+    | screen state == JOGO && control state        = handleSnakeKey event state
+    | screen state == JOGO && not (control state)  = handleHangmanKey event state
+    | otherwise = state
 
 verifyDirSnake :: Maybe Directions -> State -> State
 verifyDirSnake diretion state
     | isNothing diretion = state
     | direction (getSnake  state) == fromJust diretion = state
     | otherwise = setDirection diretion state
-
-verifyDecision :: Decisions -> State -> State
-verifyDecision decision state
-    | decision == PAUSE  = setPaused (not $ getPaused state) state
-    | otherwise = state -- provisório   
-
 
 verifyHangmanDecision :: Char -> State -> State
 verifyHangmanDecision letterKicked state =

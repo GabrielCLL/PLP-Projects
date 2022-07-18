@@ -11,9 +11,10 @@ module State
         , setSeed
         , setControl
         , setScore
-        , setRunMenu
         , setMenu
         , setDecision
+        , resetState
+        , setScreenStatus
         ) where
 
 import Snake
@@ -40,13 +41,13 @@ data State =
           , seed         :: StdGen
           , control      :: Bool
           , score        :: Int
-          , menuScreen   :: Bool
           , menu         :: Menu
           , getDecision  :: Decisions
+          , screen       :: ScreenDecision
           }
 
 initialState :: StdGen -> Hangman -> State 
-initialState gen hangman = State initialSnake (Just RIGHT) hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0 True initalMenu NOACCEPT
+initialState gen hangman = State initialSnake (Just RIGHT) hangman Nothing False [sBoard gameBoard, hBoard gameBoard] False False gen True 0  initalMenu DEFAULT MENU
 
 {- 
 initialState :: Maybe Food -> State
@@ -86,8 +87,14 @@ setControl newControl state = state {control = newControl}
 setScore :: Int -> State -> State
 setScore value state = state {score = value}
 
-setRunMenu :: Bool -> State -> State
-setRunMenu decision state = state {menuScreen = decision}
-
 setMenu :: Menu -> State -> State
 setMenu newMenu state = state {menu = newMenu}
+
+setScreenStatus :: ScreenDecision -> State -> State
+setScreenStatus newScreen state = state {screen = newScreen}
+
+resetState :: State -> State
+resetState state = newState
+        where 
+                newHangman = initialStateHangman' (getHangman state)
+                newState = initialState (seed state) newHangman

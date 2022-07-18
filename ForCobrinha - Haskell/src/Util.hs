@@ -14,7 +14,8 @@ type Coordinate = (Float, Float)
 
 -- Inputs
 data Directions =  UP | DOWN | LEFT | RIGHT deriving (Eq)
-data Decisions = NOACCEPT| ACCEPT | PAUSE | EXIT deriving (Eq)
+data Decisions = DEFAULT | ACCEPT | PAUSE | EXIT | BACK | BACKMENU deriving (Eq)
+data ScreenDecision = JOGO | CRIADORES | RECORD | MENU | GAMEOVER | GAMEWIN | PAUSED deriving (Eq)
 nameGame = "ForCobrinha" :: String
 
 -- --------------------------------------------------- -- 
